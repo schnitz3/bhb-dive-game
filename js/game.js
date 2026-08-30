@@ -965,7 +965,7 @@
 
   $('btnShare').addEventListener('click', function () {
     var m = $('finalScore').textContent;
-    var line = 'I dived ' + m + ' m with Big Head Bob and Long Neck Lisa, holding hands the whole way.';
+    var line = 'I dived ' + m + ' m with Big Head Bob and Long Neck Lisa.';
     if (navigator.share) {
       /* The URL goes in its own field so the share sheet shows it as a link
          rather than as a tail of text. */

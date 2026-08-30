@@ -77,6 +77,12 @@ still plays, that one button just does nothing.
 If a visitor would rather play it full-bleed, link them straight to
 `https://schnitz3.github.io/bhb-dive-game/`.
 
+When somebody shares their score, the link they hand out is
+`https://bigheadbob.com/pages/games`, not the address the game is actually
+served from. That is deliberate: inside the iframe the page's own address is the
+GitHub Pages one, which is not where you want people arriving. It is `GAMES_URL`
+at the top of `js/game.js`, so if that page ever moves, move it there.
+
 ### Shipping a change
 
 Edit, commit, push. One thing to remember: the service worker caches the art and
@@ -122,6 +128,7 @@ Everything sits in the block at the top of `js/game.js`.
 | `SURFACE_TIME` | seconds spent rising once the air runs out |
 | `SPAWN_SPREAD` | how far above or below you a creature can appear |
 | `PX_PER_M` | world pixels to a metre on the scoreboard |
+| `GAMES_URL` | where a shared score sends people |
 | `MIN_VIEW_W` | the least world the game will ever show across |
 
 Two of those are load-bearing and easy to break:
@@ -210,3 +217,9 @@ dependencies, no framework, and nothing loaded from anyone else's server. About
 Story and characters by David Bradley. Art and animation by Franjo Setrov. The
 original 2021 dive game by Tim Anderson, whose design this rebuild follows: the
 current that pushes back, the join button, and the two creatures are all his.
+
+The dedication behind the second link on the title screen is to Stellie, David's
+mother, who is where Long Neck Lisa came from. Book two tells that story: she
+wore a brace from chin to hips in middle school and the other children called
+her Miss Long Neck, and years later she was the one who suggested Bob should
+have a friend called Lisa.

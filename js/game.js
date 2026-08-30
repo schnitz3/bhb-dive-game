@@ -50,6 +50,11 @@
   var CURTAIN_JOIN = 0.85;  // and when together
   var CURTAIN_LIFT = 95;    // it also shoves you upward when you are apart
 
+  /* Where a shared score sends people. Not location.href: the game is embedded
+     in an iframe on the shop, so that would hand out the raw GitHub Pages
+     address instead of the page the game actually lives on. */
+  var GAMES_URL  = 'https://bigheadbob.com/pages/games';
+
   var PX_PER_M   = 45;      // world pixels to a metre on the scoreboard
   var RAMP_PX    = 14000;   // distance over which the dive reaches full difficulty
 
@@ -82,7 +87,8 @@
   var hud = $('hud');
   var panels = {
     load: $('panelLoad'), title: $('panelTitle'), how: $('panelHow'),
-    credits: $('panelCredits'), share: $('panelShare'),
+    credits: $('panelCredits'), dedication: $('panelDedication'),
+    share: $('panelShare'),
     pause: $('panelPause'), over: $('panelOver')
   };
 
@@ -661,7 +667,8 @@
   }
 
   function draw() {
-    if (state === 'title' || state === 'how' || state === 'credits' || state === 'load') {
+    if (state === 'title' || state === 'how' || state === 'credits'
+        || state === 'dedication' || state === 'load') {
       if (cover('splash')) return;
       World.drawWater(ctx, view);
       return;
@@ -947,6 +954,8 @@
   $('btnHowBack').addEventListener('click', function () { Sound.play('click'); show('title'); });
   $('btnCredits').addEventListener('click', function () { Sound.init(); Sound.play('click'); show('credits'); });
   $('btnCreditsBack').addEventListener('click', function () { Sound.play('click'); show('title'); });
+  $('btnDedication').addEventListener('click', function () { Sound.init(); Sound.play('click'); show('dedication'); });
+  $('btnDedBack').addEventListener('click', function () { Sound.play('click'); show('title'); });
   $('btnResume').addEventListener('click', togglePause);
   $('btnQuit').addEventListener('click', toMenu);
   $('btnMenu').addEventListener('click', toMenu);
@@ -956,13 +965,14 @@
 
   $('btnShare').addEventListener('click', function () {
     var m = $('finalScore').textContent;
-    var text = 'I dived ' + m + ' m with Big Head Bob and Long Neck Lisa, holding hands the whole way. '
-      + location.href;
+    var line = 'I dived ' + m + ' m with Big Head Bob and Long Neck Lisa, holding hands the whole way.';
     if (navigator.share) {
-      navigator.share({ title: 'Deep Dive', text: text }).catch(function () {});
+      /* The URL goes in its own field so the share sheet shows it as a link
+         rather than as a tail of text. */
+      navigator.share({ title: 'Deep Dive', text: line, url: GAMES_URL }).catch(function () {});
       return;
     }
-    $('shareText').value = text;
+    $('shareText').value = line + ' ' + GAMES_URL;
     show('share');
   });
   $('btnShareBack').addEventListener('click', function () { show('over'); });

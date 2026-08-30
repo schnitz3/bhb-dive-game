@@ -26,6 +26,7 @@
   var SEA_MID = [0x65, 0x31, 0xff];
   var SEA_LOW = [0x01, 0x00, 0x68];
   var SURFACE = [0xa8, 0xe8, 0xff];
+  var SURFACE_DEPTH = 520;   // how deep the bright water under the surface runs
 
   function rgb(c, a) {
     return 'rgba(' + c[0] + ',' + c[1] + ',' + c[2] + ',' + (a === undefined ? 1 : a) + ')';
@@ -39,12 +40,17 @@
     this.props = [];        // foreground rocks, decoration only
     this.weeds = [];        // seaweed, catches whoever is swimming alone
     this.curtains = [];     // rising bubble curtains, same
+    this.jellies = [];      // and the one thing holding hands will not save you from
     this.motes = [];
     this.pops = [];         // little burst rings when something is caught
     this.t = 0;
     this.nextProp = 900;
     this.nextWeed = 4200;
     this.nextCurtain = 2600;
+    /* The first jellyfish is a long way in. It is the only hazard that can take
+       a real bite out of your air, so it has to arrive as an event, not as part
+       of the furniture. */
+    this.nextJelly = 7000;
     this.propBag = [];
     this.schools = [];
     this.nextSchool = 700;
@@ -127,6 +133,18 @@
       this.nextCurtain += (2200 - 900 * difficulty) + Math.random() * 1100;
     }
 
+    while (this.nextJelly < ahead) {
+      this.jellies.push({
+        wx: this.nextJelly,
+        frac: 0.3 + Math.random() * 0.4,   // never hard against the top or floor
+        ph: Math.random() * 6.283,
+        drift: 8 + Math.random() * 16,
+        sway: 26 + Math.random() * 40,
+        hit: 0
+      });
+      this.nextJelly += (5600 - 2400 * difficulty) + Math.random() * 2800;
+    }
+
     /* Distant schools. Far off, small and dim, drifting across the empty water
        at a third of the reef's pace, using the goby art. Cheap, and the sea
        stops looking like an empty swimming pool. */
@@ -146,6 +164,7 @@
     this.props = this.props.filter(function (p) { return p.fx > behindF; });
     this.weeds = this.weeds.filter(function (p) { return p.wx > behind; });
     this.curtains = this.curtains.filter(function (p) { return p.wx > behind; });
+    this.jellies = this.jellies.filter(function (p) { return p.wx > behind; });
     var behindS = scrollX * 0.35 - 700;
     this.schools = this.schools.filter(function (p) { return p.fx > behindS; });
 
@@ -155,6 +174,10 @@
     }
     for (i = 0; i < this.curtains.length; i++) {
       if (this.curtains[i].burst > 0) this.curtains[i].burst -= dt;
+    }
+    for (i = 0; i < this.jellies.length; i++) {
+      this.jellies[i].wx -= this.jellies[i].drift * dt;
+      if (this.jellies[i].hit > 0) this.jellies[i].hit -= dt;
     }
   };
 
@@ -185,6 +208,41 @@
     return null;
   };
 
+  /* A jellyfish is a bell you can see and a curtain of tentacles under it that
+     you can also see, so the shape it stings you with is the shape it looks
+     like. Generous rather than exact: this is meant to be dodged, not measured. */
+  var JELLY_R  = 58;                  // the bell
+  var JELLY_RX = 76;                  // and the sting, out to the sides
+  var JELLY_RY = 112;                 // and down through the tentacles
+  var JELLY_DY = 48;                  // how far below the bell that sting sits
+
+  World.jellyY = function (j) {
+    var b = this.band;
+    return b.top + j.frac * (b.bottom - b.top) + Math.sin(this.t * 0.55 + j.ph) * j.sway;
+  };
+
+  World.jellyAt = function (wx, y, r) {
+    for (var i = 0; i < this.jellies.length; i++) {
+      var j = this.jellies[i];
+      var dx = (wx - j.wx) / (JELLY_RX + r);
+      var dy = (y - (this.jellyY(j) + JELLY_DY)) / (JELLY_RY + r);
+      if (dx * dx + dy * dy < 1) return j;
+    }
+    return null;
+  };
+
+  /* How close the nearest jellyfish is, 0 when there is none in range and 1
+     when it is level with you. The rumble is driven off this: you feel it
+     before you can see what it is, which is the whole point of it. */
+  World.jellyDread = function (wx, range) {
+    var worst = 0;
+    for (var i = 0; i < this.jellies.length; i++) {
+      var d = Math.abs(this.jellies[i].wx - wx);
+      if (d < range) worst = Math.max(worst, 1 - d / range);
+    }
+    return worst;
+  };
+
   /* ---------------------------------------------------------------- drawing */
 
   /* Water, light and motes. Everything else is painted on top of this. */
@@ -203,8 +261,14 @@
     if (oy > 0) {
       /* The surface is a thin bright lid, not half the picture. Anything more
          and a phone held upright looks like a swimming pool rather than the
-         open sea. */
-      var g2 = ctx.createLinearGradient(0, 0, 0, oy);
+         open sea.
+
+         The gradient has a fixed depth rather than being squeezed into whatever
+         gap sits above the reef. Without that, the moment the camera starts to
+         rise at the end of a dive the gap opens from nothing and the top of the
+         screen flashes white. This way the surface slides down into view. */
+      var span = Math.max(oy, SURFACE_DEPTH);
+      var g2 = ctx.createLinearGradient(0, oy - span, 0, oy);
       g2.addColorStop(0, rgb(SURFACE));
       g2.addColorStop(0.07, '#4fb0ff');
       g2.addColorStop(0.35, '#2461d8');
@@ -212,7 +276,7 @@
       g2.addColorStop(1, rgb(SEA_TOP));
       ctx.fillStyle = g2;
       ctx.fillRect(0, 0, w, oy + 1);
-      if (oy > 90) this.drawSurface(ctx, view);
+      if (oy >= SURFACE_DEPTH) this.drawSurface(ctx, view);
     }
 
     this.drawRays(ctx, view);
@@ -406,6 +470,65 @@
       var sx = p.fx - fx;
       if (sx < -im.width - 40 || sx > view.w + 40) continue;
       ctx.drawImage(im, sx, view.oy + p.y);
+    }
+  };
+
+  World.drawJellies = function (ctx, view, scrollX) {
+    for (var i = 0; i < this.jellies.length; i++) {
+      var j = this.jellies[i];
+      var x = j.wx - scrollX;
+      if (x < -300 || x > view.w + 300) continue;
+      var y = this.jellyY(j);
+      var pulse = Math.sin(this.t * 2.1 + j.ph);
+      var rx = JELLY_R * (1 + pulse * 0.13);
+      var ry = JELLY_R * (0.82 - pulse * 0.16);
+      var flash = Math.max(0, j.hit) * 2;
+
+      ctx.save();
+
+      /* Glow first, so the thing announces itself from a distance. */
+      ctx.globalCompositeOperation = 'lighter';
+      var gl = ctx.createRadialGradient(x, y, 8, x, y, JELLY_R * 3.1);
+      gl.addColorStop(0, 'rgba(255,150,225,' + (0.3 + flash * 0.4).toFixed(3) + ')');
+      gl.addColorStop(1, 'rgba(255,150,225,0)');
+      ctx.fillStyle = gl;
+      ctx.fillRect(x - JELLY_R * 3.2, y - JELLY_R * 3.2, JELLY_R * 6.4, JELLY_R * 6.4);
+      ctx.globalCompositeOperation = 'source-over';
+
+      /* Tentacles, trailing and out of step with each other. */
+      ctx.lineCap = 'round';
+      for (var k = 0; k < 9; k++) {
+        var ox = (k - 4) * (rx * 0.21);
+        var len = JELLY_R * (2.2 + (k % 3) * 0.55);
+        var g = ctx.createLinearGradient(0, y, 0, y + len);
+        g.addColorStop(0, 'rgba(255,190,240,0.72)');
+        g.addColorStop(1, 'rgba(255,190,240,0)');
+        ctx.strokeStyle = g;
+        ctx.lineWidth = 3.2;
+        ctx.beginPath();
+        ctx.moveTo(x + ox, y + ry * 0.5);
+        for (var t = 0.18; t <= 1.001; t += 0.18) {
+          ctx.lineTo(x + ox + Math.sin(this.t * 2.6 + k * 0.9 + t * 3.4) * 13 * t,
+                     y + ry * 0.5 + len * t);
+        }
+        ctx.stroke();
+      }
+
+      /* The bell. */
+      var bg = ctx.createRadialGradient(x - rx * 0.25, y - ry * 0.45, rx * 0.1, x, y, rx * 1.15);
+      bg.addColorStop(0, 'rgba(255,236,250,0.94)');
+      bg.addColorStop(0.55, 'rgba(255,143,224,0.72)');
+      bg.addColorStop(1, 'rgba(214,92,205,0.42)');
+      ctx.fillStyle = bg;
+      ctx.beginPath();
+      ctx.ellipse(x, y, rx, ry, 0, Math.PI, 0);
+      ctx.bezierCurveTo(x + rx, y + ry * 0.62, x - rx, y + ry * 0.62, x - rx, y);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,' + (0.7 + flash * 0.3).toFixed(2) + ')';
+      ctx.lineWidth = 2.4;
+      ctx.stroke();
+
+      ctx.restore();
     }
   };
 

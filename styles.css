@@ -299,6 +299,12 @@ html, body {
 #meter.sharing .meter-caption { color: #b6ffe9; background: rgba(6, 60, 66, 0.62); }
 #meter.low .meter-caption { color: #fff; background: rgba(150, 20, 20, 0.72); }
 
+/* Rising to the surface. Nothing red, nothing pulsing: the dive is over, and
+   the two of them are fine. */
+#meter.up .meter-track { animation: none; }
+#meter.up .meter-fill { background: linear-gradient(90deg, #9fe6ff, #d6f4ff); }
+#meter.up .meter-caption { color: #eaf8ff; background: rgba(24, 86, 150, 0.7); }
+
 .hud-buttons { display: flex; gap: 6px; justify-content: flex-end; pointer-events: auto; }
 
 .icon-btn {
@@ -717,17 +723,17 @@ kbd {
   .stat { padding: 4px 9px; }
   .meter-caption { margin-top: 2px; }
   #coach { top: calc(var(--safe-t) + 54px); padding: 5px 14px; }
-  .panel { padding: 14px 18px; }
+  .panel { padding: 11px 16px; }
   .panel-wide { width: min(96vw, 660px); }
   .btn { min-height: 42px; padding: 9px 18px; }
   .wordmark em { font-size: clamp(24px, 8vmin, 38px); }
   .tagline { margin-bottom: 10px; }
-  .steps { grid-template-columns: 1fr 1fr; gap: 7px 18px; }
-  .steps li { font-size: 12px; line-height: 1.34; gap: 9px; }
-  .step-n { width: 24px; height: 24px; font-size: 13px; }
-  .keys-line { margin-top: 8px; font-size: 11px; line-height: 1.5; }
-  #panelHow h2 { margin-bottom: 8px; font-size: 20px; }
-  .btn-row { margin-top: 10px; }
+  .steps { grid-template-columns: 1fr 1fr; gap: 6px 16px; }
+  .steps li { font-size: 11.5px; line-height: 1.3; gap: 8px; }
+  .step-n { width: 22px; height: 22px; font-size: 12px; }
+  .keys-line { margin-top: 7px; font-size: 10.5px; line-height: 1.45; }
+  #panelHow h2 { margin-bottom: 7px; font-size: 19px; }
+  .btn-row { margin-top: 9px; gap: 8px; }
   .final-value { font-size: clamp(34px, 13vmin, 56px); }
   #pad { bottom: calc(var(--safe-b) + 68px); }
   .join-btn { bottom: calc(var(--safe-b) + 16px); }

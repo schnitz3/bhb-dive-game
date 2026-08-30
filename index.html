@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
 <title>Deep Dive with Big Head Bob and Long Neck Lisa</title>
-<meta name="description" content="Bob's air is running out and Lisa can share hers. Hold hands, follow the Goby Fish and the Candy Cane Shrimp, and see how deep the two of you can get. A free diving game for phones, tablets and desktop.">
+<meta name="description" content="Bob's air is running out and Lisa can share hers. Hold hands, follow the Goby Fish and the Candy Cane Shrimp, dodge the jellyfish, and see how far the two of you get. A free diving game for phones, tablets and desktop.">
 <meta name="theme-color" content="#0b2a72">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -106,15 +106,16 @@
     <section class="panel panel-wide" id="panelHow" hidden>
       <h2>How to play</h2>
       <ol class="steps">
-        <li><span class="step-n">1</span><span>Swim <strong>right</strong>. The current keeps pushing you back, so keep kicking.</span></li>
-        <li><span class="step-n">2</span><span>Bob's air runs out fast. <strong>Hold hands</strong> and Lisa shares hers, so the bar drains far slower.</span></li>
-        <li><span class="step-n">3</span><span>The <strong>Goby Fish</strong> has perfect eyesight. Catch him and he leads you to fresh air.</span></li>
-        <li><span class="step-n">4</span><span>The <strong>Candy Cane Shrimp</strong> is tiny but strong. Catch him for a burst that smashes through anything.</span></li>
-        <li><span class="step-n">5</span><span>Catch <strong>both within a few seconds</strong> for a Symbiosis bonus. That is the whole point of the story.</span></li>
-        <li><span class="step-n">6</span><span>Bubble curtains and seaweed only stop you when you are <strong>apart</strong>. Together you go straight through.</span></li>
+        <li><span class="step-n">1</span><span>Swim <strong>right</strong>. The current pushes back, so keep kicking.</span></li>
+        <li><span class="step-n">2</span><span>Bob's air runs out fast. <strong>Hold hands</strong> and Lisa shares hers, so it lasts.</span></li>
+        <li><span class="step-n">3</span><span>The <strong>Goby Fish</strong> has perfect eyesight. Catch him for fresh air.</span></li>
+        <li><span class="step-n">4</span><span>The <strong>Candy Cane Shrimp</strong> is tiny but strong. Catch him for a burst through anything.</span></li>
+        <li><span class="step-n">5</span><span>Catch <strong>both within a few seconds</strong> for a Symbiosis bonus. That is the whole story.</span></li>
+        <li><span class="step-n">6</span><span>Bubble curtains and seaweed only stop you when you are <strong>apart</strong>.</span></li>
+        <li><span class="step-n">7</span><span>A <strong>jellyfish</strong> stings either way. When the screen shakes, swim clear of it.</span></li>
       </ol>
-      <p class="keys-line keys-desk">On a computer use the <kbd>←</kbd> <kbd>↑</kbd> <kbd>↓</kbd> <kbd>→</kbd> arrow keys, or <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd>. Hold <kbd>Space</kbd> to hold hands. <kbd>P</kbd> pauses, <kbd>M</kbd> mutes.</p>
-      <p class="keys-line keys-touch">On a phone, drag the pad on the left to swim and hold the button on the right to hold hands.</p>
+      <p class="keys-line keys-desk">Arrow keys or <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> to swim. Hold <kbd>Space</kbd> to hold hands. <kbd>P</kbd> pauses, <kbd>M</kbd> mutes.</p>
+      <p class="keys-line keys-touch">Drag on the left to swim. Hold on the right to hold hands.</p>
       <div class="btn-row">
         <button class="btn btn-primary" id="btnHowPlay" type="button">Dive</button>
         <button class="btn btn-ghost" id="btnHowBack" type="button">Back</button>
@@ -154,7 +155,7 @@
     </section>
 
     <section class="panel" id="panelOver" hidden>
-      <p class="over-kicker" id="overKicker">Out of air</p>
+      <p class="over-kicker" id="overKicker">Up you went</p>
       <div class="final">
         <span class="final-value" id="finalScore">0</span>
         <span class="final-unit">metres</span>

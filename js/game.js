@@ -53,6 +53,16 @@
   var PX_PER_M   = 45;      // world pixels to a metre on the scoreboard
   var RAMP_PX    = 14000;   // distance over which the dive reaches full difficulty
 
+  var JELLY_HIT   = 40;     // how close you have to get to be stung. Small, so
+                            // you can graze the tentacles and get away with it
+  var JELLY_STING = 0.14;   // air lost to a sting
+  var JELLY_DREAD = 950;    // how far ahead of one the rumble starts
+  var SHAKE_DREAD = 4.5;    // how hard the rumble shakes, in world pixels
+  var SHAKE_STING = 20;     // and how hard the sting does
+  var STUN_TIME   = 0.55;   // how long a sting leaves you floundering
+
+  var SURFACE_TIME = 2.6;   // seconds spent rising once the air runs out
+
   var HIT_R      = 100;     // how forgiving catching a creature is
   var MAX_ALIVE  = 6;       // creatures on screen at once
   var SPAWN_SPREAD = 760;   // how far up or down of the divers a creature can
@@ -136,11 +146,18 @@
         pools.click.list.forEach(function (a) { a.volume = 0.35; });
         pools.bubbles.list.forEach(function (a) { a.volume = 0.30; });
       },
-      play: function (k) {
+      /* rate slows or speeds a clip. There is no sting sound in the 2021 set,
+         so the jellyfish borrows the bubble clip played low and slow. */
+      play: function (k, rate, vol) {
         if (muted || !pools[k]) return;
         var p = pools[k];
         var a = p.list[p.i = (p.i + 1) % p.list.length];
-        try { a.currentTime = 0; a.play().catch(function () {}); } catch (e) {}
+        try {
+          a.playbackRate = rate || 1;
+          if (vol !== undefined) a.volume = vol;
+          a.currentTime = 0;
+          a.play().catch(function () {});
+        } catch (e) {}
       },
       loop: function (k, on) {
         var a = loops[k];
@@ -318,7 +335,9 @@
       creatures: [],
       nextCreature: 600,
       bubbleSfx: 0,
-      teach: null, teachT: 0
+      teach: null, teachT: 0,
+      shake: 0, dread: 0, stun: 0, hurt: 0,
+      surfacing: -1, lift: 0, rising: []
     };
   }
 
@@ -378,6 +397,7 @@
 
   function update(dt) {
     run.t += dt;
+    if (run.surfacing >= 0) return surface(dt);
     World.setBand(playTop(), playBottom());
     var difficulty = Math.min(1, run.scrollX / RAMP_PX);
 
@@ -395,6 +415,7 @@
     var speed = SWIM;
     if (run.joined) speed *= JOIN_SPEED;
     if (run.boost > 0) speed *= BOOST_MULT;
+    if (run.stun > 0) { speed *= 0.4; run.stun -= dt; }
 
     var inCurtain = World.curtainAt(run.scrollX + run.x + 125);
     var lift = 0;
@@ -456,6 +477,38 @@
 
     if (run.boost > 0) run.boost -= dt;
 
+    /* The jellyfish. Every other hazard in the game is answered by holding
+       hands. This one is not: it has to be swum around, so there is one moment
+       in every dive where being together is not the whole answer. */
+    var px0 = run.x + 125, py0 = run.y + 115;
+    run.dread = World.jellyDread(run.scrollX + px0, JELLY_DREAD);
+    if (run.dread > 0.3) teach('jellyNear', 'Something is coming. Give it plenty of room.');
+    /* One sting per jellyfish. Being stunned slows you to a crawl, so without
+       this the same animal catches you two or three times on the way past and
+       a single mistake costs half a tank. */
+    var jelly = World.jellyAt(run.scrollX + px0, py0, JELLY_HIT);
+    if (jelly && !jelly.spent) {
+      jelly.spent = true;
+      if (run.boost > 0) {
+        /* Riding the shrimp's push, you go straight through it. */
+        jelly.hit = 0.3;
+        World.pop(px0, py0, '#ffc2f0');
+      } else {
+        run.air -= JELLY_STING;
+        run.stun = STUN_TIME;
+        run.hurt = 1;
+        run.shake = 1;
+        run.vy = 240;
+        jelly.hit = 0.4;
+        World.pop(px0, py0, '#ff7ad0');
+        Sound.play('bubbles', 0.5, 0.5);
+        Sound.play('click', 0.55, 0.5);
+        teach('jelly', 'That stung. Swim over or under one, holding hands will not help.');
+      }
+    }
+    if (run.hurt > 0) run.hurt -= dt * 0.9;
+    if (run.shake > 0) run.shake = Math.max(0, run.shake - dt / 0.6);
+
     /* Air. */
     var drain = AIR_BASE * (1 + run.scrollX / AIR_SQUEEZE);
     if (thrust > 0.2) drain *= AIR_SWIM;
@@ -468,11 +521,11 @@
       teach('share', 'Air is low. Hold hands and Lisa will share hers.');
     }
 
-    if (run.air <= 0) { run.air = 0; return gameOver(); }
+    if (run.air <= 0) { run.air = 0; return startSurfacing(); }
 
     /* Creatures. */
     fillCreatures();
-    var px = run.x + 125, py = run.y + 115;
+    var px = px0, py = py0;
     for (var i = run.creatures.length - 1; i >= 0; i--) {
       var c = run.creatures[i];
       c.wx -= c.speed * dt;
@@ -502,6 +555,58 @@
     run.frame += (14 + thrust * 10) * dt;
 
     paintHud();
+  }
+
+  /* Running out of air does not end anybody. It ends the dive: they take each
+     other's hand and go up, which is what a diver actually does and what the
+     book has them do, and there is a sunset waiting at the top. */
+  function startSurfacing() {
+    run.surfacing = 0;
+    run.joined = true;
+    run.boost = 0;
+    run.caught = null;
+    run.stun = 0;
+    run.dread = 0;
+    run.hurt = 0;
+    hideCoach();
+    Sound.loop('music', false);
+    Sound.play('bubbles', 0.85, 0.45);
+    $('meter').classList.remove('low');
+    $('meter').classList.remove('sharing');
+    $('meter').classList.add('up');
+    $('meterCaption').textContent = 'Going up together';
+  }
+
+  function surface(dt) {
+    run.surfacing += dt;
+    var k = run.surfacing / SURFACE_TIME;
+
+    /* The two of them barely move on screen. What rises is everything else:
+       the reef sinks away underneath and the surface comes down to meet them,
+       so you watch them reach the light rather than watch them leave the top
+       of the picture. */
+    run.lift += (220 + 1250 * k * k) * dt;
+    /* Settle them into the upper third of the frame wherever they happened to
+       be, so they are never left climbing out behind the air bar. */
+    run.y += ((view.h * 0.3 - 90) - run.y) * Math.min(1, dt * 2.2);
+    run.vx *= Math.max(0, 1 - dt * 1.6);
+    run.scrollX += Math.max(0, run.vx) * dt;
+    run.frame += 12 * dt;
+    if (run.shake > 0) run.shake = Math.max(0, run.shake - dt / 0.6);
+    World.setBand(playTop() + run.lift, playBottom() + run.lift);
+
+    /* A trail of exhaled bubbles, going up faster than they are. */
+    if (run.rising.length < 110 && Math.random() < 0.8) {
+      run.rising.push({ x: run.x + 40 + Math.random() * 190, y: run.y + 60 + Math.random() * 150,
+                        r: 4 + Math.random() * 15, v: 150 + Math.random() * 280 });
+    }
+    for (var i = run.rising.length - 1; i >= 0; i--) {
+      run.rising[i].y -= run.rising[i].v * dt;
+      if (run.rising[i].y < -80) run.rising.splice(i, 1);
+    }
+
+    World.update(dt, run.scrollX, view.w, 0);
+    if (run.surfacing >= SURFACE_TIME) diveOver();
   }
 
   function collect(c, sx, sy) {
@@ -564,8 +669,21 @@
     if (state === 'over' || state === 'share') {
       if (cover('sunset')) return;
     }
+    if (!run) { World.drawWater(ctx, view); return; }
+
+    /* Everything in the water shakes, nothing on the HUD does. Shaking the
+       words as well would make them unreadable at exactly the moment you need
+       to read them, and it is a fast way to make somebody feel ill. */
+    var mag = shakeAmount();
+    if (mag > 0) {
+      ctx.save();
+      ctx.translate((Math.random() - 0.5) * mag, (Math.random() - 0.5) * mag);
+    }
+
+    var oySave = view.oy;
+    if (run.surfacing >= 0) view.oy += run.lift;
+
     World.drawWater(ctx, view);
-    if (!run) return;
     World.drawReef(ctx, view, run.scrollX);
     World.drawSchools(ctx, view, run.scrollX);
     World.drawWeeds(ctx, view, run.scrollX);
@@ -581,9 +699,60 @@
     }
 
     drawDivers();
+    World.drawJellies(ctx, view, run.scrollX);
     World.drawCurtains(ctx, view, run.scrollX);
     World.drawProps(ctx, view, run.scrollX);
     World.drawPops(ctx);
+    if (run.surfacing >= 0) drawRise();
+    view.oy = oySave;
+    if (mag > 0) ctx.restore();
+    drawFlash();
+  }
+
+  /* The rumble grows as a jellyfish closes in, and a sting is a hard jolt on
+     top of it. Anyone who has asked for less motion gets neither, and reads the
+     danger off the flash and the glow instead. */
+  var calmMotion = window.matchMedia
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function shakeAmount() {
+    if (calmMotion || !run) return 0;
+    return run.dread * SHAKE_DREAD + run.shake * run.shake * SHAKE_STING;
+  }
+
+  /* Bubbles trailing the pair on the way up. */
+  function drawRise() {
+    ctx.save();
+    for (var i = 0; i < run.rising.length; i++) {
+      var b = run.rising[i];
+      ctx.globalAlpha = 0.55;
+      ctx.fillStyle = '#eaf9ff';
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 6.283); ctx.fill();
+      ctx.globalAlpha = 0.8;
+      ctx.strokeStyle = '#ffffff';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 6.283); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  /* Two overlays that must not shake with the world: the pink flash of a sting,
+     and the light rushing in as they rise into it. */
+  function drawFlash() {
+    if (run.hurt > 0) {
+      var a = Math.min(0.34, run.hurt * 0.34);
+      var g = ctx.createRadialGradient(view.w / 2, view.h / 2, view.h * 0.52,
+                                       view.w / 2, view.h / 2, view.h * 1.05);
+      g.addColorStop(0, 'rgba(255,60,170,0)');
+      g.addColorStop(1, 'rgba(255,60,170,' + a.toFixed(3) + ')');
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, view.w, view.h);
+    }
+    if (run.surfacing >= 0) {
+      var k = Math.min(1, run.surfacing / SURFACE_TIME);
+      ctx.fillStyle = 'rgba(214,244,255,' + (k * k * 0.34).toFixed(3) + ')';
+      ctx.fillRect(0, 0, view.w, view.h);
+    }
   }
 
   /* Bob and Lisa. Apart they are two sprites with Bob above and Lisa trailing
@@ -617,7 +786,14 @@
       ctx.restore();
     }
 
-    if (run.joined) {
+    if (run.surfacing >= 0) {
+      var tilt = -0.42 * Math.min(1, run.surfacing / 0.7);
+      ctx.save();
+      ctx.translate(x + 125, y + 115);
+      ctx.rotate(tilt);
+      A.draw(ctx, A.pair, f, -125, -115, 0.8);
+      ctx.restore();
+    } else if (run.joined) {
       A.draw(ctx, A.pair, f, x, y, 0.8);
     } else {
       A.draw(ctx, A.lisa, f, x + 35, y + 120, 0.81);
@@ -649,7 +825,7 @@
     meter.classList.toggle('low', run.air < 0.3);
     meter.classList.toggle('sharing', run.joined);
     $('meterCaption').textContent = run.joined ? 'Lisa is sharing her air'
-      : run.air < 0.3 ? 'Air is low' : 'Air';
+      : run.air < 0.3 ? 'Air is getting low' : 'Air';
   }
 
   /* --------------------------------------------------------------- screens */
@@ -680,16 +856,16 @@
     last = performance.now();
   }
 
-  function gameOver() {
+  function diveOver() {
     Sound.stopAll();
-    Sound.play('gameover');
+    Sound.play('gameover', 1, 0.4);
     var m = Math.floor(run.scrollX / PX_PER_M);
     var record = m > save.best;
     if (record) { save.best = m; persist(); }
     $('finalScore').textContent = m;
     $('overKicker').textContent = run.symb > 0
-      ? 'Out of air, but you found symbiosis'
-      : 'Bob is out of air';
+      ? 'You surfaced together, and you found symbiosis'
+      : 'Air ran low, so up you went';
     var fb = $('finalBest');
     fb.textContent = record ? 'A new deepest dive!' : 'Your best is ' + save.best + ' m';
     fb.classList.toggle('record', record);
@@ -697,6 +873,7 @@
     $('tallyShrimp').textContent = run.shrimp;
     $('tallySymb').textContent = run.symb;
     $('best').textContent = save.best;
+    $('meter').classList.remove('up');
     show('over');
   }
 

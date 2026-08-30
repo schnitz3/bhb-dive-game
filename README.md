@@ -22,6 +22,17 @@ is a page from the story rather than a mechanic bolted on afterwards.
 | The two of them live in symbiosis | Catch one of each within five seconds for the big bonus |
 | Lisa gets tangled in the seaweed and Bob helps | Seaweed only holds whoever is swimming alone |
 
+The one hazard that is not in the book is the jellyfish, and it is there on
+purpose. Everything else in the game is answered by holding hands, so without it
+the whole dive has a single answer. The jellyfish has to be swum around: the
+screen begins to rumble while it is still off to the right, harder the closer it
+gets, and there is one moment in every dive where being together is not enough
+and you have to actually steer.
+
+A dive does not end with anyone dying. When the air runs out Bob and Lisa take
+each other's hand, the reef sinks away below them and the light comes down to
+meet them as they surface. Then the sunset, and your distance.
+
 A player who never touches the join button lasts around forty seconds. A player
 who holds hands lasts two to three times as long and gets two to three times as
 far. That gap is the whole point, and it is the number the game is tuned around.
@@ -104,6 +115,11 @@ Everything sits in the block at the top of `js/game.js`.
 | `AIR_GOBY` / `AIR_SHRIMP` / `AIR_SYMB` | what each catch gives back |
 | `SYMB_WINDOW` | seconds between the two catches to count as symbiosis |
 | `CURTAIN_SLOW` / `CURTAIN_JOIN` | how much bubbles cost you, apart and together |
+| `JELLY_STING` / `STUN_TIME` | what a jellyfish costs, and how long it leaves you floundering |
+| `JELLY_HIT` | how close you have to get to be stung |
+| `JELLY_DREAD` | how far ahead of one the rumble starts |
+| `SHAKE_DREAD` / `SHAKE_STING` | how hard the screen shakes for each |
+| `SURFACE_TIME` | seconds spent rising once the air runs out |
 | `SPAWN_SPREAD` | how far above or below you a creature can appear |
 | `PX_PER_M` | world pixels to a metre on the scoreboard |
 | `MIN_VIEW_W` | the least world the game will ever show across |
@@ -117,6 +133,11 @@ Two of those are load-bearing and easy to break:
 - `AIR_SQUEEZE` is the only thing that ends a good player's dive. With the drain
   capped instead of climbing, a player who has understood the game simply never
   runs out and there is nothing to beat.
+
+Anyone whose device asks for reduced motion gets no shake at all, neither the
+rumble nor the jolt. They still get the glow and the pink flash, so the danger
+still reads. Nothing in the HUD ever shakes either: shaking the words would make
+them unreadable at exactly the moment you need to read them.
 
 ## How it fits any screen
 
@@ -142,7 +163,7 @@ Two things follow from that, and both are deliberate:
 index.html      shell, menus and HUD (real DOM, so text stays crisp)
 styles.css      layout for portrait, landscape, tablet and desktop
 js/atlas.js     the sprite sheets and where every frame of them lives
-js/world.js     the ocean: water, light, reef, seaweed, bubble curtains
+js/world.js     the ocean: water, light, reef, seaweed, bubbles, jellyfish
 js/game.js      air, movement, input and game flow
 sw.js           offline cache
 assets/img/     the 2021 art, converted to WebP
@@ -162,6 +183,8 @@ minute of staring at a loading bar.
 Four things from the original are gone because they are now drawn in code, and
 look better for it: the eight-file light-shimmer sheet, the bubble-column sheet,
 the exhale-bubble sheet, and the button sheet. Between them they were 2.5 MB.
+The jellyfish is drawn in code too, so it costs nothing to download and its bell
+pulses and its tentacles trail on their own clocks.
 
 ## Running it locally
 

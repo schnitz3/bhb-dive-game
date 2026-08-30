@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Deep Dive with Big Head Bob and Long Neck Lisa</title>
+<meta name="description" content="Bob's air is running out and Lisa can share hers. Hold hands, follow the Goby Fish and the Candy Cane Shrimp, and see how deep the two of you can get. A free diving game for phones, tablets and desktop.">
+<meta name="theme-color" content="#0b2a72">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Deep Dive">
+
+<meta property="og:type" content="website">
+<meta property="og:title" content="Deep Dive with Big Head Bob and Long Neck Lisa">
+<meta property="og:description" content="Hold hands to share air. Nobody gets far down there alone.">
+<meta property="og:url" content="https://schnitz3.github.io/bhb-dive-game/">
+<meta property="og:image" content="https://schnitz3.github.io/bhb-dive-game/icons/og-card.png">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Deep Dive with Big Head Bob and Long Neck Lisa">
+<meta name="twitter:description" content="Hold hands to share air. Nobody gets far down there alone.">
+<meta name="twitter:image" content="https://schnitz3.github.io/bhb-dive-game/icons/og-card.png">
+
+<link rel="icon" href="favicon.png" sizes="32x32">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="app">
+  <canvas id="stage" aria-label="Big Head Bob and Long Neck Lisa diving on a reef"></canvas>
+
+  <!-- Touch controls. Hidden until a finger actually touches the screen, so a
+       desktop player never sees them. -->
+  <div id="touch" aria-hidden="true">
+    <div id="pad">
+      <div class="pad-ring"></div>
+      <div class="pad-nub" id="padNub"></div>
+      <span class="pad-word">SWIM</span>
+    </div>
+    <button id="joinBtn" class="join-btn" type="button" aria-label="Hold hands">
+      <svg viewBox="0 0 44 32" aria-hidden="true">
+        <path d="M6 21c0-4 3-7 7-7h4l-3-4a2 2 0 0 1 3-3l6 7"/>
+        <path d="M38 21c0-4-3-7-7-7h-4l3-4a2 2 0 0 0-3-3l-6 7"/>
+        <path d="M17 17h10"/>
+      </svg>
+      <span>HOLD<br>HANDS</span>
+    </button>
+  </div>
+
+  <header id="hud" hidden>
+    <div class="hud-scores">
+      <div class="stat"><span class="stat-label">Distance</span><span class="stat-value" id="score">0</span><span class="stat-unit">m</span></div>
+      <div class="stat stat-best"><span class="stat-label">Best</span><span class="stat-value" id="best">0</span><span class="stat-unit">m</span></div>
+    </div>
+
+    <div id="meter" role="img" aria-label="Air left in the tanks">
+      <div class="meter-track">
+        <div class="meter-fill" id="airFill"></div>
+        <div class="meter-share" id="airShare"></div>
+      </div>
+      <div class="meter-caption" id="meterCaption">Air</div>
+    </div>
+
+    <div class="hud-buttons">
+      <button id="btnSound" class="icon-btn" type="button" aria-label="Mute sound" aria-pressed="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path class="spk" d="M4 9v6h4l5 4V5L8 9H4z"/><g class="waves"><path d="M16 8.5a5 5 0 0 1 0 7"/><path d="M18.5 6a8.5 8.5 0 0 1 0 12"/></g><g class="slash"><path d="M16 9l6 6M22 9l-6 6"/></g></svg>
+      </button>
+      <button id="btnPause" class="icon-btn" type="button" aria-label="Pause game">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5h3v14H8zM13 5h3v14h-3z" fill="currentColor" stroke="none"/></svg>
+      </button>
+      <button id="btnFull" class="icon-btn" type="button" aria-label="Toggle full screen">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- One line of coaching at a time, in plain words. -->
+  <div id="coach" hidden><span id="coachText"></span></div>
+
+  <!-- Celebration when a Goby and a Shrimp are caught together. -->
+  <div id="symb" hidden><strong>SYMBIOSIS!</strong><span>Different, and better together</span></div>
+
+  <div id="overlay">
+
+    <section class="panel" id="panelLoad">
+      <div class="loader-bob" aria-hidden="true"></div>
+      <h1 class="wordmark"><span>Deep Dive</span><em>Bob &amp; Lisa</em></h1>
+      <div class="bar"><div class="bar-fill" id="loadBar"></div></div>
+      <p class="loading-note">Filling the tanks…</p>
+    </section>
+
+    <section class="panel" id="panelTitle" hidden>
+      <h1 class="wordmark"><span>Deep Dive</span><em>Bob &amp; Lisa</em></h1>
+      <p class="tagline">Nobody gets far down there alone.</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btnPlay" type="button">Dive</button>
+        <button class="btn btn-ghost" id="btnHow" type="button">How to play</button>
+      </div>
+      <p class="best-line" id="titleBest" hidden>Your deepest dive: <strong></strong> m</p>
+      <p class="hint-line" id="titleHint"></p>
+      <button class="btn btn-text" id="btnCredits" type="button">Credits</button>
+    </section>
+
+    <section class="panel panel-wide" id="panelHow" hidden>
+      <h2>How to play</h2>
+      <ol class="steps">
+        <li><span class="step-n">1</span><span>Swim <strong>right</strong>. The current keeps pushing you back, so keep kicking.</span></li>
+        <li><span class="step-n">2</span><span>Bob's air runs out fast. <strong>Hold hands</strong> and Lisa shares hers, so the bar drains far slower.</span></li>
+        <li><span class="step-n">3</span><span>The <strong>Goby Fish</strong> has perfect eyesight. Catch him and he leads you to fresh air.</span></li>
+        <li><span class="step-n">4</span><span>The <strong>Candy Cane Shrimp</strong> is tiny but strong. Catch him for a burst that smashes through anything.</span></li>
+        <li><span class="step-n">5</span><span>Catch <strong>both within a few seconds</strong> for a Symbiosis bonus. That is the whole point of the story.</span></li>
+        <li><span class="step-n">6</span><span>Bubble curtains and seaweed only stop you when you are <strong>apart</strong>. Together you go straight through.</span></li>
+      </ol>
+      <p class="keys-line keys-desk">On a computer use the <kbd>←</kbd> <kbd>↑</kbd> <kbd>↓</kbd> <kbd>→</kbd> arrow keys, or <kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd>. Hold <kbd>Space</kbd> to hold hands. <kbd>P</kbd> pauses, <kbd>M</kbd> mutes.</p>
+      <p class="keys-line keys-touch">On a phone, drag the pad on the left to swim and hold the button on the right to hold hands.</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btnHowPlay" type="button">Dive</button>
+        <button class="btn btn-ghost" id="btnHowBack" type="button">Back</button>
+      </div>
+    </section>
+
+    <section class="panel panel-wide" id="panelCredits" hidden>
+      <h2>Credits</h2>
+      <dl class="credits">
+        <dt>Story and characters</dt><dd>David Bradley</dd>
+        <dt>Art and animation</dt><dd>Franjo Setrov</dd>
+        <dt>The original 2021 dive game</dt><dd>Tim Anderson</dd>
+      </dl>
+      <p class="cred-note">Based on <em>The Adventures of Big Head Bob and Long Neck Lisa: A Deep Dive into Friendship</em>, and on a real dive off Koh Tao in 2018 where a goby fish and a candy cane shrimp were keeping house together.</p>
+      <p class="cred-creed">Be Kind. Be Calm.</p>
+      <div class="btn-row">
+        <button class="btn btn-ghost" id="btnCreditsBack" type="button">Back</button>
+      </div>
+    </section>
+
+    <section class="panel" id="panelShare" hidden>
+      <h2>Share your dive</h2>
+      <p class="share-hint">Copy this and paste it anywhere.</p>
+      <input id="shareText" class="share-box" type="text" readonly>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btnShareCopy" type="button">Copy</button>
+        <button class="btn btn-ghost" id="btnShareBack" type="button">Back</button>
+      </div>
+    </section>
+
+    <section class="panel" id="panelPause" hidden>
+      <h2>Paused</h2>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btnResume" type="button">Keep diving</button>
+        <button class="btn btn-ghost" id="btnQuit" type="button">Surface</button>
+      </div>
+    </section>
+
+    <section class="panel" id="panelOver" hidden>
+      <p class="over-kicker" id="overKicker">Out of air</p>
+      <div class="final">
+        <span class="final-value" id="finalScore">0</span>
+        <span class="final-unit">metres</span>
+      </div>
+      <p class="final-best" id="finalBest"></p>
+      <ul class="tally" id="tally">
+        <li><span class="tally-n" id="tallyGoby">0</span><span>Goby Fish</span></li>
+        <li><span class="tally-n" id="tallyShrimp">0</span><span>Shrimp</span></li>
+        <li><span class="tally-n" id="tallySymb">0</span><span>Symbiosis</span></li>
+      </ul>
+      <div class="btn-row">
+        <button class="btn btn-primary" id="btnAgain" type="button">Dive again</button>
+        <button class="btn btn-ghost" id="btnShare" type="button">Share</button>
+      </div>
+      <button class="btn btn-text" id="btnMenu" type="button">Back to start</button>
+    </section>
+
+  </div>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+</div>
+
+<noscript>
+  <div class="noscript">Deep Dive needs JavaScript switched on to run.</div>
+</noscript>
+
+<script src="js/atlas.js"></script>
+<script src="js/world.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>

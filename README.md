@@ -43,11 +43,15 @@ far. That gap is the whole point, and it is the number the game is tuned around.
 
 There is nothing to build. The folder is the site.
 
-1. On GitHub, create a new empty **public** repository called `bhb-dive-game`.
-   Do not add a README or a licence, or the first push will be rejected.
-2. Open GitHub Desktop, add this folder, and publish it to that repository.
-3. In the new repository go to **Settings > Pages**, set **Source** to
-   *Deploy from a branch*, choose branch `main` and folder `/ (root)`, and save.
+1. Open this folder in GitHub Desktop: **File > Add Local Repository**, or drag
+   the folder onto the app.
+2. Click **Publish repository** at the top. Name it `bhb-dive-game` and
+   **untick "Keep this code private"**, or GitHub Pages will refuse to serve it.
+   Do not create the repository on the GitHub website first: publishing makes it
+   for you, and a repository that already exists will reject the push.
+3. On github.com open the new repository, go to **Settings > Pages**, set
+   **Source** to *Deploy from a branch*, choose branch `main` and folder
+   `/ (root)`, and save.
 4. Give it a minute. The game is then live at:
 
 ```

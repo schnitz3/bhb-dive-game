@@ -81,7 +81,7 @@ html, body {
 
 #pad {
   position: absolute;
-  left: 18%;
+  left: max(20%, 76px);
   top: auto;
   bottom: calc(var(--safe-b) + 96px);
   width: 132px;
@@ -197,18 +197,6 @@ html, body {
     grid-template-columns: 1fr auto 1fr;
     grid-template-areas: "scores meter buttons";
   }
-}
-
-/* On a narrow phone the two score pills wrapped onto separate lines, which
-   pushed the air bar down onto the coaching line. Tighten them so both sit on
-   one row next to the buttons. */
-@media (max-width: 480px) {
-  .hud-scores { flex-wrap: nowrap; gap: 5px; }
-  .stat { padding: 5px 8px; gap: 3px; }
-  .stat-label { font-size: 8.5px; letter-spacing: 0.05em; }
-  .stat-value { font-size: 17px; }
-  .stat-unit { font-size: 9px; }
-  .icon-btn { width: 32px; height: 32px; }
 }
 
 .hud-scores { display: flex; flex-wrap: wrap; gap: clamp(6px, 2vw, 20px); }
@@ -345,7 +333,12 @@ html, body {
   top: calc(var(--safe-t) + clamp(96px, 20vmin, 132px));
   transform: translateX(-50%);
   z-index: 4;
-  max-width: min(88vw, 560px);
+  /* Absolutely positioned at left:50% with no width of its own, this could only
+     grow into the right half of the screen, so a single sentence broke into
+     four lines on a phone. max-content lets it take the width it wants and the
+     transform pulls it back to centre. */
+  width: max-content;
+  max-width: min(92vw, 560px);
   padding: clamp(7px, 1.6vmin, 13px) clamp(14px, 3vw, 26px);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.95);
@@ -938,11 +931,17 @@ kbd {
   .panel { width: min(90vw, 520px); }
 }
 
-/* Kept to the end so it wins on source order over the base #coach rule: on a
-   narrow phone the HUD is two rows deep and the coaching line has to clear the
-   air caption underneath it. */
+/* Kept to the end so these win on source order over the rules they override.
+   On a narrow phone the two score pills have to share one row, or they push the
+   air bar down onto the coaching line underneath it. */
 @media (max-width: 480px) {
-  #coach { top: calc(var(--safe-t) + 134px); font-size: 14px; padding: 8px 16px; }
+  .hud-scores { flex-wrap: nowrap; gap: 5px; }
+  .stat { padding: 5px 8px; gap: 3px; }
+  .stat-label { font-size: 8.5px; letter-spacing: 0.05em; }
+  .stat-value { font-size: 17px; }
+  .stat-unit { font-size: 9px; }
+  .icon-btn { width: 32px; height: 32px; }
+  #coach { top: calc(var(--safe-t) + 118px); font-size: 14px; padding: 8px 16px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -534,7 +534,7 @@
         World.pop(px0, py0, '#ff7ad0');
         Sound.play('bubbles', 0.5, 0.5);
         Sound.play('click', 0.55, 0.5);
-        teach('jelly', 'That stung. Swim over or under one, holding hands will not help.');
+        teach('jelly', 'That stung. Holding hands will not help here.');
       }
     }
     if (run.hurt > 0) run.hurt -= dt * 0.9;
@@ -952,8 +952,34 @@
     toast(muted ? 'Sound off' : 'Sound on');
   }
 
+  /* An iPhone has no full screen for anything that is not a video, and a framed
+     page is refused it as well unless the page around it allows it. Rather than
+     leave a button that does nothing, work out which of the three situations we
+     are in once, at the start. */
+  var canFull = !!(document.fullscreenEnabled || document.webkitFullscreenEnabled);
+  var framed = (function () {
+    try { return window.self !== window.top; } catch (e) { return true; }
+  }());
+
+  function setUpFullButton() {
+    var b = $('btnFull');
+    if (canFull) return;
+    if (framed) {
+      /* Opening the game on its own is the next best thing to full screen, and
+         on a phone it is most of the way there. */
+      b.setAttribute('aria-label', 'Open the game in its own tab');
+      b.setAttribute('title', 'Open in its own tab');
+    } else {
+      b.hidden = true;
+    }
+  }
+
   function toggleFull() {
     var d = document;
+    if (!canFull) {
+      if (framed) window.open(location.href, '_blank', 'noopener');
+      return;
+    }
     if (!d.fullscreenElement && !d.webkitFullscreenElement) {
       (app.requestFullscreen || app.webkitRequestFullscreen || function () {}).call(app);
     } else {
@@ -1117,6 +1143,7 @@
   if (window.matchMedia && window.matchMedia('(hover: none) and (pointer: coarse)').matches) goTouch();
 
   $('btnSound').setAttribute('aria-pressed', muted ? 'true' : 'false');
+  setUpFullButton();
 
   World.reset();
   A.load(function (p) { $('loadBar').style.width = Math.round(p * 100) + '%'; }).then(function () {

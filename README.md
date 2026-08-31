@@ -55,7 +55,7 @@ There is nothing to build. The folder is the site.
 4. Give it a minute. The game is then live at:
 
 ```
-https://schnitz3.github.io/bhb-dive-game/
+https://dive.bigheadbob.com/
 ```
 
 Every path in here is relative and this has been checked from a subfolder, so
@@ -68,7 +68,7 @@ bigheadbob.com runs on Shopify, whose page editor keeps `<iframe>` but strips
 page, open the body's HTML view with the `<>` button, and paste this in:
 
 ```html
-<iframe src="https://schnitz3.github.io/bhb-dive-game/"
+<iframe src="https://dive.bigheadbob.com/"
         title="Deep Dive with Big Head Bob and Long Neck Lisa"
         allow="fullscreen; autoplay; web-share; clipboard-write"
         allowfullscreen
@@ -84,7 +84,7 @@ can see. The game copes either way, it just falls back to a box you copy the
 text out of by hand, which is the worse version.
 
 If a visitor would rather play it full-bleed, link them straight to
-`https://schnitz3.github.io/bhb-dive-game/`.
+`https://dive.bigheadbob.com/`.
 
 When somebody shares their score, the link they hand out is
 `https://bigheadbob.com/pages/games`, not the address the game is actually

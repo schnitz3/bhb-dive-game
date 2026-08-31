@@ -103,6 +103,7 @@
       <div class="text-links">
         <button class="btn btn-text" id="btnCredits" type="button">Credits</button>
         <button class="btn btn-text" id="btnDedication" type="button">Dedication</button>
+        <button class="btn btn-text" id="btnPictures" type="button">Pictures</button>
       </div>
     </section>
 
@@ -146,6 +147,27 @@
       <p class="ded-sign">- David &amp; BHB -</p>
       <div class="btn-row">
         <button class="btn btn-ghost" id="btnDedBack" type="button">Back</button>
+      </div>
+    </section>
+
+    <section class="panel panel-gallery" id="panelPictures" hidden>
+      <h2>Pictures</h2>
+      <div class="gallery" id="gallery">
+        <img id="galleryImg" alt="">
+        <button class="gal-arrow gal-prev" id="btnPicPrev" type="button" aria-label="Previous picture">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+        </button>
+        <button class="gal-arrow gal-next" id="btnPicNext" type="button" aria-label="Next picture">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+        </button>
+      </div>
+      <div class="gal-side">
+        <p class="gal-caption"><strong id="galTitle"></strong><span id="galNote"></span></p>
+        <div class="gal-dots" id="galDots"></div>
+        <p class="gal-hint">Swipe, or use the arrows.</p>
+        <div class="btn-row">
+          <button class="btn btn-ghost" id="btnPicBack" type="button">Back</button>
+        </div>
       </div>
     </section>
 

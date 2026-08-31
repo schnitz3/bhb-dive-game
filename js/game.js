@@ -88,7 +88,7 @@
   var panels = {
     load: $('panelLoad'), title: $('panelTitle'), how: $('panelHow'),
     credits: $('panelCredits'), dedication: $('panelDedication'),
-    share: $('panelShare'),
+    pictures: $('panelPictures'), share: $('panelShare'),
     pause: $('panelPause'), over: $('panelOver')
   };
 
@@ -208,6 +208,11 @@
     if (e.key === 'm' || e.key === 'M') toggleMute();
     if (e.key === 'f' || e.key === 'F') toggleFull();
     if (e.key === 'Escape' && state === 'play') togglePause();
+    if (e.key === 'Escape' && state === 'pictures') show('title');
+    if (state === 'pictures') {
+      if (e.key === 'ArrowRight') showPicture(picAt + 1);
+      if (e.key === 'ArrowLeft') showPicture(picAt - 1);
+    }
     if (e.key === 'Enter' && (state === 'title' || state === 'over')) startRun();
   });
   window.addEventListener('keyup', function (e) { delete keys[e.key]; });
@@ -668,7 +673,7 @@
 
   function draw() {
     if (state === 'title' || state === 'how' || state === 'credits'
-        || state === 'dedication' || state === 'load') {
+        || state === 'dedication' || state === 'pictures' || state === 'load') {
       if (cover('splash')) return;
       World.drawWater(ctx, view);
       return;
@@ -945,6 +950,56 @@
     toastTimer = setTimeout(function () { t.classList.remove('show'); }, 1500);
   }
 
+  /* -------------------------------------------------------------- gallery */
+
+  /* Franjo painted these and until now you only ever saw them blurred behind a
+     menu. Both are already loaded and in the offline cache, so the gallery
+     costs nothing and works on a plane. */
+  var PICTURES = [
+    { src: 'assets/img/splash.webp',
+      title: 'A Deep Dive into Friendship',
+      note: 'Bob and Lisa in the heart of the reef, with the Goby Fish and the Candy Cane Shrimp keeping house below them.' },
+    { src: 'assets/img/sunset.webp',
+      title: 'After the dive',
+      note: 'The two of them back above the water, at the end of the story.' }
+  ];
+  var picAt = 0;
+  var galDots = $('galDots');
+
+  PICTURES.forEach(function (p, i) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'gal-dot';
+    b.setAttribute('aria-label', 'Picture ' + (i + 1) + ': ' + p.title);
+    b.addEventListener('click', function () { showPicture(i); });
+    galDots.appendChild(b);
+  });
+
+  function showPicture(i) {
+    picAt = (i % PICTURES.length + PICTURES.length) % PICTURES.length;
+    var p = PICTURES[picAt];
+    var img = $('galleryImg');
+    img.src = p.src;
+    img.alt = p.title;
+    $('galTitle').textContent = p.title;
+    $('galNote').textContent = p.note;
+    for (var k = 0; k < galDots.children.length; k++) {
+      galDots.children[k].classList.toggle('on', k === picAt);
+    }
+  }
+
+  /* Swipe. A short flick counts; a slow drag down the page does not. */
+  var swipeFrom = null;
+  var gal = $('gallery');
+  gal.addEventListener('pointerdown', function (e) { swipeFrom = e.clientX; });
+  gal.addEventListener('pointercancel', function () { swipeFrom = null; });
+  gal.addEventListener('pointerup', function (e) {
+    if (swipeFrom === null) return;
+    var dx = e.clientX - swipeFrom;
+    swipeFrom = null;
+    if (Math.abs(dx) > 40) showPicture(picAt + (dx < 0 ? 1 : -1));
+  });
+
   /* ---------------------------------------------------------------- wiring */
 
   $('btnPlay').addEventListener('click', startRun);
@@ -956,6 +1011,12 @@
   $('btnCreditsBack').addEventListener('click', function () { Sound.play('click'); show('title'); });
   $('btnDedication').addEventListener('click', function () { Sound.init(); Sound.play('click'); show('dedication'); });
   $('btnDedBack').addEventListener('click', function () { Sound.play('click'); show('title'); });
+  $('btnPictures').addEventListener('click', function () {
+    Sound.init(); Sound.play('click'); showPicture(0); show('pictures');
+  });
+  $('btnPicBack').addEventListener('click', function () { Sound.play('click'); show('title'); });
+  $('btnPicPrev').addEventListener('click', function () { Sound.play('click'); showPicture(picAt - 1); });
+  $('btnPicNext').addEventListener('click', function () { Sound.play('click'); showPicture(picAt + 1); });
   $('btnResume').addEventListener('click', togglePause);
   $('btnQuit').addEventListener('click', toMenu);
   $('btnMenu').addEventListener('click', toMenu);

@@ -105,6 +105,18 @@ If you ever move the game to a different URL, update `og:url` and `og:image` in
 
 ---
 
+## Pictures
+
+The title screen has a **Pictures** link beside Credits and Dedication. It shows
+Franjo's two paintings whole, which nothing else in the game does: everywhere
+else they are cropped to fill the screen and blurred behind a menu. Swipe, or
+use the arrows, the dots, or the left and right arrow keys.
+
+They are the same two files the menus already use as backdrops, so the gallery
+adds nothing to the download and works offline like the rest of it. To add
+another painting, drop the file in `assets/img/`, add it to `PICTURES` near the
+bottom of `js/game.js` and to the list in `sw.js`, and bump the cache version.
+
 ## Controls
 
 - **Touch**: drag anywhere on the left of the screen to swim, hold anywhere on

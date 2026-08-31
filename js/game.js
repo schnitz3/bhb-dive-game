@@ -188,21 +188,33 @@
   var input = { x: 0, y: 0 };
   var keys = {};
 
+  /* Keys are tracked by physical position rather than by the character they
+     produce. e.key changes under a modifier, so holding W and then pressing
+     Shift reports "w" down and "W" up, which strands the key held down for
+     ever. That is how Bob and Lisa got stuck holding hands: a Shift keyup went
+     missing, and nothing ever cleared it. */
   function readKeys() {
-    var right = keys.ArrowRight || keys.d || keys.D;
-    var left = keys.ArrowLeft || keys.a || keys.A;
-    var up = keys.ArrowUp || keys.w || keys.W;
-    var down = keys.ArrowDown || keys.s || keys.S;
+    var right = keys.ArrowRight || keys.KeyD;
+    var left = keys.ArrowLeft || keys.KeyA;
+    var up = keys.ArrowUp || keys.KeyW;
+    var down = keys.ArrowDown || keys.KeyS;
     return {
       x: (right ? 1 : 0) - (left ? 0.6 : 0),
       y: (down ? 1 : 0) - (up ? 1 : 0),
-      join: !!(keys[' '] || keys.Shift)
+      join: !!(keys.Space || keys.ShiftLeft || keys.ShiftRight)
     };
+  }
+
+  /* Every key event carries the true state of the modifiers, so use it to heal
+     anything left stuck. Belt and braces on top of clearing on focus changes. */
+  function reconcile(e) {
+    if (!e.shiftKey) { delete keys.ShiftLeft; delete keys.ShiftRight; }
   }
 
   window.addEventListener('keydown', function (e) {
     if (e.key === ' ' || e.key.indexOf('Arrow') === 0) e.preventDefault();
-    keys[e.key] = true;
+    if (e.code) keys[e.code] = true;
+    reconcile(e);
     if (e.repeat) return;
     if (e.key === 'p' || e.key === 'P') togglePause();
     if (e.key === 'm' || e.key === 'M') toggleMute();
@@ -215,11 +227,19 @@
     }
     if (e.key === 'Enter' && (state === 'title' || state === 'over')) startRun();
   });
-  window.addEventListener('keyup', function (e) { delete keys[e.key]; });
+  window.addEventListener('keyup', function (e) {
+    if (e.code) delete keys[e.code];
+    reconcile(e);
+  });
   window.addEventListener('blur', function () {
     keys = {};
     if (state === 'play') togglePause();
   });
+  /* Coming back to the page, assume nothing is held. Anything released while
+     the game was not listening would otherwise stay down for ever, which
+     matters most inside an iframe, where a click on the page around the game
+     takes the keyboard away mid-press. */
+  window.addEventListener('focus', function () { keys = {}; });
   document.addEventListener('visibilitychange', function () {
     if (document.hidden && state === 'play') togglePause();
   });

@@ -19,6 +19,7 @@
   var ART_W = 1280;        // one reef panel
   var ART_H = 720;         // the design height, and the sea floor sits at the bottom of it
   var LOOP  = ART_W * 3;   // three panels before the reef repeats
+  var PROP_FLOOR = 714;    // where the base of a foreground rock rests
 
   /* Water colours, sampled straight off the original sea background so the
      painted reef still sits in the right coloured water. */
@@ -105,7 +106,18 @@
     var i;
 
     while (this.nextProp < ahead) {
-      this.props.push({ img: nextProp(this), fx: this.nextProp, y: 250 + Math.random() * 180 });
+      /* Stand each rock on the sea bed rather than at a random depth. The 2021
+         build gave every one its own y so that its base landed on the floor,
+         and picking a random one instead left starfish and coral hanging in
+         open water. Deriving it from the image height does the same job for
+         any art, including anything added later. */
+      var name = nextProp(this);
+      var im = A.img(name);
+      this.props.push({
+        img: name,
+        fx: this.nextProp,
+        y: PROP_FLOOR - (im ? im.height : 340)
+      });
       this.nextProp += 1100 + Math.random() * 900;
     }
     /* Hazards thicken as the dive goes on. difficulty runs 0 to 1. */

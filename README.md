@@ -70,13 +70,18 @@ page, open the body's HTML view with the `<>` button, and paste this in:
 ```html
 <iframe src="https://schnitz3.github.io/bhb-dive-game/"
         title="Deep Dive with Big Head Bob and Long Neck Lisa"
-        allow="fullscreen; autoplay"
+        allow="fullscreen; autoplay; web-share; clipboard-write"
         allowfullscreen
         style="display:block; width:100%; height:78vh; min-height:520px; border:0; border-radius:16px; background:#0b2a72; margin:0 auto; max-width:1100px;"></iframe>
 ```
 
-`allowfullscreen` is what makes the full-screen button work. Without it the game
-still plays, that one button just does nothing.
+Every item in `allow` is there because a button stops working without it.
+`allowfullscreen` and `fullscreen` are the full-screen button. `web-share` lets
+the Share button open the phone's real share sheet, and `clipboard-write` lets
+the Copy button reach the clipboard. A framed page is granted none of these by
+default, and the browser refuses silently rather than raising anything the game
+can see. The game copes either way, it just falls back to a box you copy the
+text out of by hand, which is the worse version.
 
 If a visitor would rather play it full-bleed, link them straight to
 `https://schnitz3.github.io/bhb-dive-game/`.

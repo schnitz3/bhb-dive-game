@@ -963,28 +963,58 @@
   $('btnSound').addEventListener('click', toggleMute);
   $('btnFull').addEventListener('click', toggleFull);
 
+  function copyPanel(line) {
+    $('shareText').value = line + ' ' + GAMES_URL;
+    show('share');
+  }
+
+  /* The share sheet is the nice version, but it is not always allowed to open.
+     Embedded in a page, the browser only grants it if that page's iframe says
+     allow="web-share", and a rejected share used to be swallowed by an empty
+     catch, so the button looked broken. Anything other than the reader closing
+     the sheet themselves now falls back to the box they can copy from. */
   $('btnShare').addEventListener('click', function () {
     var m = $('finalScore').textContent;
     var line = 'I dived ' + m + ' m with Big Head Bob and Long Neck Lisa.';
+    var handled = false;
     if (navigator.share) {
-      /* The URL goes in its own field so the share sheet shows it as a link
-         rather than as a tail of text. */
-      navigator.share({ title: 'Deep Dive', text: line, url: GAMES_URL }).catch(function () {});
-      return;
+      try {
+        navigator.share({ title: 'Deep Dive', text: line, url: GAMES_URL })
+          .then(null, function (err) {
+            if (!err || err.name !== 'AbortError') copyPanel(line);
+          });
+        handled = true;
+      } catch (e) { handled = false; }
     }
-    $('shareText').value = line + ' ' + GAMES_URL;
-    show('share');
+    if (!handled) copyPanel(line);
   });
   $('btnShareBack').addEventListener('click', function () { show('over'); });
+  /* Same story for the clipboard: navigator.clipboard is blocked inside an
+     iframe unless the page allows it, and the old code neither noticed nor said
+     so. Fall back to the ancient execCommand, which iframes still permit, and
+     if even that fails at least tell the reader to copy it by hand. */
   $('btnShareCopy').addEventListener('click', function () {
     var box = $('shareText');
-    box.select();
-    var done = false;
-    if (navigator.clipboard) {
-      navigator.clipboard.writeText(box.value).then(function () { toast('Copied'); });
-      done = true;
+    box.removeAttribute('readonly');        // iOS will not select a readonly field
+    box.focus();
+    box.setSelectionRange(0, box.value.length);
+
+    function legacy() {
+      try { return document.execCommand('copy'); } catch (e) { return false; }
     }
-    if (!done) { try { document.execCommand('copy'); toast('Copied'); } catch (e) {} }
+    function done(ok) {
+      box.setAttribute('readonly', 'readonly');
+      toast(ok ? 'Copied' : 'Select the text above to copy it');
+    }
+
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(box.value).then(
+        function () { done(true); },
+        function () { done(legacy()); }
+      );
+    } else {
+      done(legacy());
+    }
   });
 
   /* --------------------------------------------------------------- the loop */
